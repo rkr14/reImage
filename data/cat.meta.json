@@ -1,0 +1,15 @@
+{
+  "width": 4608,
+  "height": 2592,
+  "channels": 3,
+  "dtype": "uint8",
+  "image_bin": "cat.image.bin",
+  "seed_mode": "rect",
+  "rect": [
+    3228,
+    1551,
+    4577,
+    2469
+  ],
+  "seed_bin": "cat.seed.bin"
+}

@@ -2,11 +2,36 @@
 #include "SeedMask.h"
 #include "DataModel.h"
 #include "GraphBuilder.h"
-#include "utils/json.hpp"
 #include <fstream>
 #include <iostream>
+#include <string>
+#include <iterator>
+#include <cctype>
 
-using json = nlohmann::json;
+// tiny helper to extract integer fields "width" and "height" from a small JSON file
+static bool read_meta_wh(const std::string& path, int& W, int& H) {
+    std::ifstream ifs(path);
+    if (!ifs) return false;
+    std::string s((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    auto find_int = [&](const std::string& key, int& out)->bool{
+        size_t p = s.find('"' + key + '"');
+        if (p == std::string::npos) return false;
+        p = s.find(':', p);
+        if (p == std::string::npos) return false;
+        ++p;
+        // skip spaces
+        while (p < s.size() && isspace((unsigned char)s[p])) ++p;
+        // read number
+        size_t q = p;
+        while (q < s.size() && (s[q]=='-' || isdigit((unsigned char)s[q]))) ++q;
+        if (q==p) return false;
+        try {
+            out = std::stoi(s.substr(p, q-p));
+        } catch(...) { return false; }
+        return true;
+    };
+    return find_int("width", W) && find_int("height", H);
+}
 
 int main(int argc, char** argv) {
     if (argc < 4) {
@@ -18,12 +43,12 @@ int main(int argc, char** argv) {
     std::string metaPath = argv[2];
     std::string seedPath = argv[3];
 
-    // Parse meta.json
-    std::ifstream jfile(metaPath);
-    json meta;
-    jfile >> meta;
-    int W = meta["width"];
-    int H = meta["height"];
+    // Parse meta.json (tiny parser used above)
+    int W = 0, H = 0;
+    if (!read_meta_wh(metaPath, W, H)) {
+        std::cerr << "Failed to read meta file (width/height) " << metaPath << "\n";
+        return 1;
+    }
 
     // Load data
     Image img(imgPath, W, H);
@@ -37,11 +62,38 @@ int main(int argc, char** argv) {
     // Build graph
     double lambda = 50.0;
     double beta = 0.1;
-    GraphBuilder builder(model, lambda, beta);
+    GraphBuilder builder(model, img, lambda, beta);
     builder.buildGraph();
 
     std::cout << "Graph built. Ready for maxflow.\n";
 
-    // You’ll call builder.graph().maxflow() here once Dinic is ready
-    return 0;
+    // Run max-flow
+    double flow = builder.graph().max_flow(W*H, W*H+1);
+    std::cout << "Max flow: " << flow << "\n";
+        // extract min-cut (reachable from source -> foreground)
+        int source = W * H;
+        auto reachable = builder.graph().minCut(source);
+
+        // write mask output: either argv[4] or metaPath + ".mask.bin"
+        std::string maskOut;
+        if (argc >= 5) maskOut = argv[4];
+        else maskOut = metaPath + ".mask.bin";
+
+        std::ofstream mf(maskOut, std::ios::binary);
+        if (!mf) {
+            std::cerr << "Failed to open mask output file: " << maskOut << "\n";
+            return 1;
+        }
+        for (int y = 0; y < H; ++y) {
+            for (int x = 0; x < W; ++x) {
+                int idx = y * W + x;
+                uint8_t v = reachable[idx] ? 1 : 0;
+                mf.write(reinterpret_cast<const char*>(&v), 1);
+            }
+        }
+        mf.close();
+
+        std::cout << "Wrote mask to " << maskOut << "\n";
+
+        return 0;
 }

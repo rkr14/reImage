@@ -1,0 +1,3 @@
+C:/Users/rewan/ProgrammmingNProjects/reImage/build/CMakeFiles/segment.dir
+C:/Users/rewan/ProgrammmingNProjects/reImage/build/CMakeFiles/edit_cache.dir
+C:/Users/rewan/ProgrammmingNProjects/reImage/build/CMakeFiles/rebuild_cache.dir

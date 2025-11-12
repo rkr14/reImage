@@ -66,6 +66,10 @@ def main():
 
     # write raw rgb bytes (row-major, R,G,B interleaved)
     image_bin_path = args.out_prefix + ".image.bin"
+    # ensure output directory exists when out_prefix includes directories
+    out_dir = os.path.dirname(image_bin_path)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
     rgb.tofile(image_bin_path)   # raw bytes (uint8)
 
     # prepare metadata
@@ -96,15 +100,15 @@ def main():
         meta["seed_bin"] = os.path.basename(seed_bin_path)
     elif args.mask:
         mask_img = make_mask_from_image(args.mask, h, w)
-        # map 0->0 (bg), 1->1 (fg); but we want unknown (-1) for pixels not specified,
-        # since mask provides definite info for all pixels, we keep them as 0/1
+        # map 0->0 (bg), 1->1 (fg); since mask provides definite info for all pixels,
+        # we keep them as 0/1
         mask = mask_img.astype(np.int8)
         mask.tofile(seed_bin_path)
         seed_mode = "mask"
         meta["seed_mode"] = "mask"
         meta["seed_bin"] = os.path.basename(seed_bin_path)
     else:
-        # no seed provided -> write none, but segmentation code may still accept rectangle externally
+        # no seed provided -> write none; segmentation code may still accept default behavior
         seed_mode = "none"
 
     meta_path = args.out_prefix + ".meta.json"
@@ -114,11 +118,30 @@ def main():
     print("Wrote:", image_bin_path, meta_path, ("and " + seed_bin_path) if seed_mode != "none" else "")
     if args.call_cpp:
         # call the C++ binary with args: image_bin meta_path seed_bin (if any) or rect args
+        # we pass an extra arg for the C++ to write a mask file we can read back
+        mask_path = args.out_prefix + ".mask.bin"
         cmd = [args.call_cpp, image_bin_path, meta_path]
         if seed_mode != "none":
             cmd += [seed_bin_path]
+        cmd += [mask_path]
         print("Calling C++:", " ".join(cmd))
-        subprocess.run(cmd)
+        subprocess.run(cmd, check=True)
+
+        # if C++ produced a mask file, compose an RGBA PNG with background transparent
+        if os.path.exists(mask_path):
+            # read raw image
+            img = np.fromfile(image_bin_path, dtype=np.uint8)
+            img = img.reshape((h, w, 3))
+            mask = np.fromfile(mask_path, dtype=np.uint8).reshape((h, w))
+            # create BGRA for OpenCV (B,G,R,A)
+            bgra = np.zeros((h, w, 4), dtype=np.uint8)
+            bgra[:, :, 0] = img[:, :, 2]
+            bgra[:, :, 1] = img[:, :, 1]
+            bgra[:, :, 2] = img[:, :, 0]
+            bgra[:, :, 3] = (mask > 0).astype(np.uint8) * 255
+            out_png = args.out_prefix + ".segmented.png"
+            cv2.imwrite(out_png, bgra)
+            print("Wrote segmented PNG:", out_png)
 
 if __name__ == "__main__":
     main()

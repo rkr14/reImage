@@ -1,0 +1,19 @@
+# ninja log v7
+14	591	7843740342925894	CMakeFiles/segment.dir/src/GraphBuilder.cpp.obj	f9bdd066c020228d
+28	601	7843740343070583	CMakeFiles/segment.dir/src/Image.cpp.obj	4de2da9451b43843
+44	638	7843740343194272	CMakeFiles/segment.dir/src/SeedMask.cpp.obj	ed59b8f223dc6c91
+1	639	7843740342764843	CMakeFiles/segment.dir/src/DataModel.cpp.obj	c6bf3751f9e555d2
+64	803	7843740343425131	CMakeFiles/segment.dir/src/main.cpp.obj	baa32591f5a0a659
+87	815	7843740343667114	CMakeFiles/segment.dir/Segmentation/Segmentation/Dinic.cpp.obj	6f6419761b503131
+815	1026	7843740350944426	segment.exe	a5246508ac9c203d
+4	563	7843743892176038	CMakeFiles/segment.dir/Segmentation/Segmentation/Dinic.cpp.obj	6f6419761b503131
+563	739	7843743897763321	segment.exe	a5246508ac9c203d
+4	473	7843744590624887	CMakeFiles/segment.dir/src/GraphBuilder.cpp.obj	f9bdd066c020228d
+8	577	7843744590624887	CMakeFiles/segment.dir/src/main.cpp.obj	baa32591f5a0a659
+578	755	7843744596366783	segment.exe	a5246508ac9c203d
+4	570	7843744850689982	CMakeFiles/segment.dir/Segmentation/Segmentation/Dinic.cpp.obj	6f6419761b503131
+572	772	7843744856352441	segment.exe	a5246508ac9c203d
+5	680	7843748759552246	CMakeFiles/segment.dir/src/main.cpp.obj	baa32591f5a0a659
+681	871	7843748766301334	segment.exe	a5246508ac9c203d
+4	563	7843783890830044	CMakeFiles/segment.dir/Segmentation/Segmentation/Dinic.cpp.obj	6f6419761b503131
+564	767	7843783896419179	segment.exe	a5246508ac9c203d

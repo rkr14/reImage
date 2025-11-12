@@ -1,16 +1,18 @@
 #pragma once
 #include "DataModel.h"
-#include "../DINIC/dinic.cpp"  // your custom maxflow implementation
+#include "Image.h"
+#include "../Segmentation/Segmentation/Dinic.h"  // Dinic header
 
 class GraphBuilder {
 public:
-    GraphBuilder(const DataModel& data, double lambda, double beta);
+    GraphBuilder(const DataModel& data, const Image& img, double lambda, double beta);
     void buildGraph();
     Dinic& graph();
 
 private:
     const DataModel& model;
+    const Image& image;
     double lambda, beta;
-    Dinic dinic;
     int W, H;
+    Dinic dinic;
 };
