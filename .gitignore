@@ -1,0 +1,80 @@
+# =========================================================
+#  GraphCut Segmentation Project - .gitignore
+# =========================================================
+
+# --- C++ build artifacts ---
+/cpp/build/
+/cpp/CMakeFiles/
+/cpp/CMakeCache.txt
+/cpp/Makefile
+/cpp/*.cmake
+/cpp/*.o
+/cpp/*.obj
+/cpp/*.pdb
+/cpp/*.ilk
+/cpp/*.idb
+/cpp/*.exe
+/cpp/*.dll
+/cpp/*.lib
+/cpp/*.a
+/cpp/*.exp
+/cpp/segment
+/cpp/segment.exe
+/cpp/Debug/
+/cpp/Release/
+/cpp/x64/
+
+# --- Python cache & venv ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.venv/
+venv/
+env/
+ENV/
+
+# --- Editor / IDE metadata ---
+.vscode/
+.vs/
+.idea/
+*.swp
+*.swo
+*.log
+
+# --- OS junk ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Project data outputs ---
+# Raw binary images, seeds, masks
+data/**/*.bin
+data/**/*.meta.json
+data/**/*.json
+data/**/*.npy
+data/**/*.npz
+data/**/*.png
+data/**/*.jpg
+data/**/*.jpeg
+
+# Keep example inputs (if you have any)
+!data/example_*.jpg
+!data/sample_*.jpg
+
+# --- Temporary or debug files ---
+*.tmp
+*.bak
+*.old
+*.log
+*.out
+
+# --- Python virtual environment settings ---
+*.env
+.env
+python/__pycache__/
+
+# --- Build scripts and local runs ---
+run.bat
+run.sh

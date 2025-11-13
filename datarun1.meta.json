@@ -1,0 +1,14 @@
+{
+  "width": 4608,
+  "height": 2592,
+  "channels": 3,
+  "image_bin": "datarun1.image.bin",
+  "seed_bin": "datarun1.seed.bin",
+  "seed_mode": "rect",
+  "rect": [
+    1863,
+    248,
+    4586,
+    2567
+  ]
+}
