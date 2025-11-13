@@ -1,0 +1,32 @@
+[
+{
+  "directory": "D:/devx1/reImage/build",
+  "command": "C:\\Users\\Asus\\scoop\\apps\\mingw-msvcrt\\current\\bin\\g++.exe  @CMakeFiles/segment.dir/includes_CXX.rsp -m64 -O3 -DNDEBUG -std=c++23 -Wall -Wextra -Wpedantic -o CMakeFiles\\segment.dir\\src\\main.cpp.obj -c D:\\devx1\\reImage\\src\\main.cpp",
+  "file": "D:/devx1/reImage/src/main.cpp",
+  "output": "CMakeFiles/segment.dir/src/main.cpp.obj"
+},
+{
+  "directory": "D:/devx1/reImage/build",
+  "command": "C:\\Users\\Asus\\scoop\\apps\\mingw-msvcrt\\current\\bin\\g++.exe  @CMakeFiles/segment.dir/includes_CXX.rsp -m64 -O3 -DNDEBUG -std=c++23 -Wall -Wextra -Wpedantic -o CMakeFiles\\segment.dir\\src\\Image.cpp.obj -c D:\\devx1\\reImage\\src\\Image.cpp",
+  "file": "D:/devx1/reImage/src/Image.cpp",
+  "output": "CMakeFiles/segment.dir/src/Image.cpp.obj"
+},
+{
+  "directory": "D:/devx1/reImage/build",
+  "command": "C:\\Users\\Asus\\scoop\\apps\\mingw-msvcrt\\current\\bin\\g++.exe  @CMakeFiles/segment.dir/includes_CXX.rsp -m64 -O3 -DNDEBUG -std=c++23 -Wall -Wextra -Wpedantic -o CMakeFiles\\segment.dir\\src\\SeedMask.cpp.obj -c D:\\devx1\\reImage\\src\\SeedMask.cpp",
+  "file": "D:/devx1/reImage/src/SeedMask.cpp",
+  "output": "CMakeFiles/segment.dir/src/SeedMask.cpp.obj"
+},
+{
+  "directory": "D:/devx1/reImage/build",
+  "command": "C:\\Users\\Asus\\scoop\\apps\\mingw-msvcrt\\current\\bin\\g++.exe  @CMakeFiles/segment.dir/includes_CXX.rsp -m64 -O3 -DNDEBUG -std=c++23 -Wall -Wextra -Wpedantic -o CMakeFiles\\segment.dir\\src\\DataModel.cpp.obj -c D:\\devx1\\reImage\\src\\DataModel.cpp",
+  "file": "D:/devx1/reImage/src/DataModel.cpp",
+  "output": "CMakeFiles/segment.dir/src/DataModel.cpp.obj"
+},
+{
+  "directory": "D:/devx1/reImage/build",
+  "command": "C:\\Users\\Asus\\scoop\\apps\\mingw-msvcrt\\current\\bin\\g++.exe  @CMakeFiles/segment.dir/includes_CXX.rsp -m64 -O3 -DNDEBUG -std=c++23 -Wall -Wextra -Wpedantic -o CMakeFiles\\segment.dir\\src\\GraphBuilder.cpp.obj -c D:\\devx1\\reImage\\src\\GraphBuilder.cpp",
+  "file": "D:/devx1/reImage/src/GraphBuilder.cpp",
+  "output": "CMakeFiles/segment.dir/src/GraphBuilder.cpp.obj"
+}
+]

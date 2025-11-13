@@ -1,0 +1,3 @@
+C:\Users\Asus\scoop\apps\cmake\current\bin\cmake.exe -E rm -f CMakeFiles\segment.dir/objects.a
+C:\Users\Asus\scoop\apps\mingw-msvcrt\current\bin\ar.exe qc CMakeFiles\segment.dir/objects.a @CMakeFiles\segment.dir\objects1.rsp
+C:\Users\Asus\scoop\apps\mingw-msvcrt\current\bin\g++.exe -m64 -O3 -DNDEBUG -m64 -Wl,--whole-archive CMakeFiles\segment.dir/objects.a -Wl,--no-whole-archive -o segment.exe -Wl,--out-implib,libsegment.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\segment.dir\linkLibs.rsp

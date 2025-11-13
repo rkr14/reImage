@@ -1,0 +1,3 @@
+D:/devx1/reImage/build/CMakeFiles/segment.dir
+D:/devx1/reImage/build/CMakeFiles/edit_cache.dir
+D:/devx1/reImage/build/CMakeFiles/rebuild_cache.dir

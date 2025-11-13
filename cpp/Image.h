@@ -16,16 +16,24 @@ public:
     // Alternative: construct from raw vector (not used here, but provided)
     Image(const std::vector<uint8_t>& raw, int width, int height, int channels = 3);
 
-    int width() const { return W; }
-    int height() const { return H; }
-    int channels() const { return C; }
+    [[nodiscard]] constexpr int width() const noexcept { return W; }
+    [[nodiscard]] constexpr int height() const noexcept { return H; }
+    [[nodiscard]] constexpr int channels() const noexcept { return C; }
 
-    // Returns color in RGB order (0..255 each) as doubles
-    Vec3 getColor(int x, int y) const;
+    // Inline hot path for performance - called millions of times during graph building
+    [[nodiscard]] inline Vec3 getColor(int x, int y) const noexcept {
+        const size_t idx = (static_cast<size_t>(y) * W + x) * C;
+        return Vec3{
+            static_cast<double>(data[idx]),
+            static_cast<double>(data[idx + 1]),
+            static_cast<double>(data[idx + 2])
+        };
+    }
 
-    const std::vector<uint8_t>& raw() const { return data; }
+    [[nodiscard]] const std::vector<uint8_t>& raw() const noexcept { return data; }
 
 private:
     int W, H, C;
-    std::vector<uint8_t> data;
+    // Aligned memory for potential SIMD operations
+    alignas(32) std::vector<uint8_t> data;
 };

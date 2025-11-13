@@ -1,0 +1,15 @@
+[project]
+name = "reimage"
+version = "0.1.0"
+description = "Interactive Graph-Cut Image Segmentation"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=2.2.6",
+    "opencv-python>=4.8",
+    "pillow>=10.0",
+    "pyqt6>=6.5.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
