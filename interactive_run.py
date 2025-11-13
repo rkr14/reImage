@@ -144,6 +144,99 @@ class RectDrawer:
 
 
 # -------------------------
+# Scribble drawer (FG/BG)
+# -------------------------
+class ScribbleDrawer:
+    """
+    Draw foreground/background scribbles on the image.
+    Left mouse button => foreground (label = 1, red)
+    Right mouse button => background (label = -1, blue)
+    Keys:
+      'r' -> reset
+      Enter -> accept and return mask (HxW int8: 1 fg, -1 bg, 0 unknown)
+      Esc -> cancel
+    """
+
+    def __init__(self, winname: str, image: np.ndarray, brush_radius: int = 6):
+        self.winname = winname
+        # display in BGR so colors look correct when shown with OpenCV
+        self.image = image.copy()
+        self.h, self.w = self.image.shape[:2]
+        self.display = self.image.copy()
+        self.br = int(brush_radius)
+        self.mask = np.zeros((self.h, self.w), dtype=np.int8)
+        self.drawing = False
+        self.button = None  # 1 for left (fg), 2 for right (bg)
+
+        cv2.namedWindow(self.winname, cv2.WINDOW_NORMAL)
+        cv2.resizeWindow(self.winname, min(self.w, 1600), min(self.h, 900))
+        cv2.setMouseCallback(self.winname, self._mouse_cb)
+        self._redraw()
+
+    def _mouse_cb(self, event, x, y, flags, param):
+        if event == cv2.EVENT_LBUTTONDOWN:
+            self.drawing = True
+            self.button = 1
+            cv2.circle(self.mask, (x, y), self.br, 1, -1)
+            self._draw_circle_on_display((x, y), 1)
+        elif event == cv2.EVENT_RBUTTONDOWN:
+            self.drawing = True
+            self.button = 2
+            cv2.circle(self.mask, (x, y), self.br, -1, -1)
+            self._draw_circle_on_display((x, y), -1)
+        elif event == cv2.EVENT_MOUSEMOVE and self.drawing:
+            if self.button == 1:
+                cv2.circle(self.mask, (x, y), self.br, 1, -1)
+                self._draw_circle_on_display((x, y), 1)
+            elif self.button == 2:
+                cv2.circle(self.mask, (x, y), self.br, -1, -1)
+                self._draw_circle_on_display((x, y), -1)
+        elif event in (cv2.EVENT_LBUTTONUP, cv2.EVENT_RBUTTONUP):
+            self.drawing = False
+            self.button = None
+
+    def _draw_circle_on_display(self, center, label):
+        color = (0, 0, 255) if label == 1 else (255, 0, 0)  # BGR: red fg, blue bg
+        cv2.circle(self.display, center, self.br, color, -1)
+        self._draw_instructions()
+
+    def _draw_instructions(self):
+        info = "Left=FG(red), Right=BG(blue), r=reset, Enter=accept, Esc=quit"
+        cv2.putText(self.display, info, (10, self.h - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 1, cv2.LINE_AA)
+
+    def _redraw(self):
+        # rebuild display from original + mask overlays
+        self.display = self.image.copy()
+        fg = (self.mask == 1).astype(np.uint8) * 255
+        bg = (self.mask == -1).astype(np.uint8) * 255
+        if fg.any():
+            fg3 = cv2.merge([fg, np.zeros_like(fg), np.zeros_like(fg)])  # BGR red
+            self.display = cv2.addWeighted(self.display, 1.0, fg3, 0.5, 0)
+        if bg.any():
+            bg3 = cv2.merge([np.zeros_like(bg), np.zeros_like(bg), bg])
+            # swap to blue channel for visibility (BGR)
+            bg3 = cv2.merge([bg, np.zeros_like(bg), np.zeros_like(bg)])
+            self.display = cv2.addWeighted(self.display, 1.0, bg3, 0.5, 0)
+        self._draw_instructions()
+
+    def run(self) -> np.ndarray:
+        self._redraw()
+        while True:
+            cv2.imshow(self.winname, self.display)
+            key = cv2.waitKey(20) & 0xFF
+            if key == ord('r'):
+                self.mask.fill(0)
+                self._redraw()
+            elif key in (13, 10):  # Enter
+                cv2.destroyWindow(self.winname)
+                return self.mask.copy()
+            elif key == 27:  # Esc
+                cv2.destroyWindow(self.winname)
+                raise SystemExit("User cancelled scribble selection.")
+
+
+# -------------------------
 # Export functions
 # -------------------------
 def export_image_bin(rgb_image: np.ndarray, out_path: str):
@@ -154,6 +247,41 @@ def export_image_bin(rgb_image: np.ndarray, out_path: str):
     assert rgb_image.dtype == np.uint8 and rgb_image.ndim == 3 and rgb_image.shape[2] == 3
     rgb_image.tofile(out_path)
     print(f"Wrote image binary: {out_path}")
+
+def export_seed_bin_scribbles(mask: np.ndarray, out_path: str):
+    """
+    mask: H x W int8 with values -1 (background), 0 (unknown), 1 (foreground)
+    Writes raw int8 bytes to out_path.
+    """
+    assert mask.dtype == np.int8 and mask.ndim == 2
+    # Convert to C++ SeedMask convention: -1 = unknown, 0 = background, 1 = foreground
+    out = np.empty_like(mask, dtype=np.int8)
+    out[mask == 1] = 1
+    out[mask == -1] = 0
+    out[mask == 0] = -1
+    out.tofile(out_path)
+    print(f"Wrote scribble seed binary: {out_path}")
+    return mask
+
+def write_scribble_json(out_prefix: str, mask: np.ndarray):
+    """
+    Write a small JSON that indicates whether foreground/background scribbles exist.
+    This can be consumed by the C++ graph builder to decide whether to apply
+    infinite (hard) terminal weights to FG/BG.
+    """
+    fg_present = bool((mask == 1).any())
+    bg_present = bool((mask == -1).any())
+    data = {
+        "fg_confirm": fg_present,
+        "bg_confirm": bg_present,
+        "fg_value": 1,
+        "bg_value": -1
+    }
+    path = out_prefix + ".scribbles.json"
+    with open(path, "w") as f:
+        json.dump(data, f, indent=2)
+    print(f"Wrote scribble json: {path}")
+    return path
 
 def export_seed_bin_rect(w: int, h: int, rect: Rect, out_path: str):
     """
@@ -193,13 +321,29 @@ def write_meta_json(out_prefix: str, width: int, height: int, rect: Rect, image_
 # -------------------------
 # Call C++ binary
 # -------------------------
-def call_segment_binary(exe_path: str, image_bin: str, W: int, H: int, rect: Rect, out_mask_path: str, cwd: str = None, timeout: int = None):
+def call_segment_binary(exe_path: str, image_bin: str, W: int, H: int,
+                        mode: str, out_mask_path: str,
+                        seed_bin: str = None, scribble_json: str = None,
+                        cwd: str = None, timeout: int = None):
     """
-    Calls C++ 'segment' exe with rect mode.
-    argv contract: ./segment image.bin W H rect x0 y0 x1 y1 out_mask.bin
+    Calls C++ 'segment' exe.
+
+    Two supported modes:
+      - 'rect'      : argv: ./segment image.bin W H rect x0 y0 x1 y1 out_mask.bin
+      - 'scribbles' : argv: ./segment image.bin W H scribbles seed.bin scribbles.json out_mask.bin
+
     Returns CompletedProcess instance.
     """
-    cmd = [exe_path, image_bin, str(W), str(H), "rect", str(rect.x0), str(rect.y0), str(rect.x1), str(rect.y1), out_mask_path]
+    if mode == "rect":
+        # seed_bin expected to be None; for compatibility caller should pass Rect in place of seed_bin
+        raise RuntimeError("rect mode not supported by this signature; use existing call site for rect")
+    elif mode == "scribbles":
+        if seed_bin is None or scribble_json is None:
+            raise RuntimeError("scribbles mode requires seed_bin and scribble_json")
+        cmd = [exe_path, image_bin, str(W), str(H), "scribbles", seed_bin, scribble_json, out_mask_path]
+    else:
+        raise RuntimeError(f"Unknown mode for segmentation: {mode}")
+
     print("Calling C++:", " ".join(cmd))
     try:
         result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=timeout)
@@ -279,16 +423,15 @@ def main():
     H, W = img_rgb.shape[:2]
     print(f"Loaded image {image_path} ({W}x{H})")
 
-    # 3) Interactive rectangle drawing
-    print("Draw rectangle: click-drag-release. Press Enter when done, Esc to cancel, 'r' to reset.")
-    drawer = RectDrawer("Draw rectangle", img_bgr)  # show BGR so colors look as expected
+    # 3) Interactive scribble drawing
+    print("Draw scribbles: Left=foreground, Right=background. Press Enter when done, Esc to cancel, 'r' to reset.")
+    drawer = ScribbleDrawer("Scribble FG/BG", img_bgr)
     try:
-        r = drawer.run()
+        scribble_mask = drawer.run()
     except SystemExit as e:
         print("Cancelled by user.")
         return
-    rect = r.normalized()
-    print("Rectangle:", rect)
+    print("Scribbles collected.")
 
     # 4) Export files
     os.makedirs(os.path.dirname(out_prefix) or ".", exist_ok=True)
@@ -296,13 +439,28 @@ def main():
     seed_bin_path = out_prefix + ".seed.bin"
     meta_path = out_prefix + ".meta.json"
     export_image_bin(img_rgb, image_bin_path)
-    _mask = export_seed_bin_rect(W, H, rect, seed_bin_path)
-    write_meta_json(out_prefix, W, H, rect, image_bin_path, seed_bin_path)
+    _mask = export_seed_bin_scribbles(scribble_mask, seed_bin_path)
+    scribble_json = write_scribble_json(out_prefix, scribble_mask)
+    # write meta noting scribbles mode
+    meta = {
+        "width": int(W),
+        "height": int(H),
+        "channels": 3,
+        "image_bin": os.path.basename(image_bin_path),
+        "seed_bin": os.path.basename(seed_bin_path),
+        "seed_mode": "scribbles",
+        "scribbles_json": os.path.basename(scribble_json)
+    }
+    with open(meta_path, "w") as f:
+        json.dump(meta, f, indent=2)
+    print(f"Wrote meta: {meta_path}")
 
     # 5) Call C++ executable
     out_mask_path = out_prefix + ".out_mask.bin"
     try:
-        cp = call_segment_binary(exe_path, image_bin_path, W, H, rect, out_mask_path, timeout=args.timeout)
+        cp = call_segment_binary(exe_path, image_bin_path, W, H, mode="scribbles",
+                                 out_mask_path=out_mask_path, seed_bin=seed_bin_path,
+                                 scribble_json=scribble_json, timeout=args.timeout)
     except Exception as e:
         print("Error running C++ segmenter:", e)
         return

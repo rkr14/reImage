@@ -9,6 +9,8 @@ DataModel::DataModel(int binsPerChannel, double alpha_, double epsilon_)
     totalBins = bins * bins * bins;
     histFG.assign(totalBins, 0.0);
     histBG.assign(totalBins, 0.0);
+    fgHard = true;
+    bgHard = true;
 }
 
 int DataModel::getBinIndex(const Vec3& c) const {
@@ -70,12 +72,24 @@ void DataModel::computeDataCosts(const Image& img, const SeedMask& seeds) {
             double Dfg = -std::log(Pfg + eps);
             double Dbg = -std::log(Pbg + eps);
             int label = seeds.getLabel(x, y);
-            if (label == 1) { Dfg = 0.0; Dbg = K; }
-            else if (label == 0) { Dfg = K; Dbg = 0.0; }
+            // label: -1 unknown, 0 background, 1 foreground
+            if (label == 1) {
+                if (fgHard) { Dfg = 0.0; Dbg = K; }
+                // else keep Dfg/Dbg computed from histograms (soft)
+            }
+            else if (label == 0) {
+                if (bgHard) { Dfg = K; Dbg = 0.0; }
+                // else keep Dfg/Dbg computed from histograms (soft)
+            }
             DpFG[idx] = Dfg;
             DpBG[idx] = Dbg;
         }
     }
+}
+
+void DataModel::setHardSeeds(bool fg_hard, bool bg_hard) {
+    fgHard = fg_hard;
+    bgHard = bg_hard;
 }
 
 double DataModel::getDpFG(int x, int y) const {

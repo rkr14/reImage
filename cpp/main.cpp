@@ -2,6 +2,7 @@
 #include <string>
 #include <memory>
 #include <cstdlib>
+#include <fstream>
 
 #include "Image.h"
 #include "SeedMask.h"
@@ -36,6 +37,8 @@ int main(int argc, char** argv) {
 
     std::unique_ptr<SeedMask> seeds;
     std::string outMaskPath;
+    bool fg_confirm = true;
+    bool bg_confirm = true;
 
     try {
         if (mode == "rect") {
@@ -57,6 +60,34 @@ int main(int argc, char** argv) {
             std::string seedBin = argv[5];
             outMaskPath = argv[6];
             seeds.reset(new SeedMask(seedBin, W, H));
+        } else if (mode == "scribbles") {
+            // Expected args: image.bin W H scribbles seed.bin scribbles.json out_mask.bin
+            if (argc < 8) {
+                std::cerr << "Scribbles mode requires seed.bin scribbles.json out_mask.bin\n";
+                return 1;
+            }
+            std::string seedBin = argv[5];
+            std::string scribbleJson = argv[6];
+            outMaskPath = argv[7];
+            seeds.reset(new SeedMask(seedBin, W, H));
+
+            // Simple JSON parse for fg_confirm/bg_confirm
+            std::ifstream jn(scribbleJson);
+            if (!jn) {
+                std::cerr << "Failed to open scribbles json: " << scribbleJson << "\n";
+                return 1;
+            }
+            std::string content((std::istreambuf_iterator<char>(jn)), std::istreambuf_iterator<char>());
+            auto find_true = [&](const std::string &key)->bool{
+                std::size_t p = content.find(key);
+                if (p == std::string::npos) return false;
+                std::size_t t = content.find("true", p);
+                if (t == std::string::npos) return false;
+                // ensure 'true' occurs before any following 'false' or comma
+                return true;
+            };
+            fg_confirm = find_true("\"fg_confirm\"");
+            bg_confirm = find_true("\"bg_confirm\"");
         } else {
             std::cerr << "Unknown seed mode: " << mode << "\n";
             return 1;
@@ -64,6 +95,8 @@ int main(int argc, char** argv) {
 
         Image img(imageBin, W, H, 3);
         DataModel dm(8, 1.0, 1e-9);
+        // Configure whether confirmed scribbles are hard constraints
+        dm.setHardSeeds(fg_confirm, bg_confirm);
 
         std::cout << "Building histograms..." << std::endl;
         dm.buildHistograms(img, *seeds);

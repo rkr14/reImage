@@ -16,6 +16,10 @@ public:
     double getDpFG(int x, int y) const;
     double getDpBG(int x, int y) const;
 
+    // Configure whether scribble-confirmed FG/BG should be treated as hard (infinite)
+    // If false, scribbles are treated as soft evidence (use histogram-based costs).
+    void setHardSeeds(bool fg_hard, bool bg_hard);
+
     int width() const { return W; }
     int height() const { return H; }
 
@@ -28,6 +32,8 @@ private:
     int W, H;
     std::vector<double> histFG, histBG;
     std::vector<double> DpFG, DpBG;
+    bool fgHard;
+    bool bgHard;
 
     int getBinIndex(const Vec3& c) const;
     void normalize(std::vector<double>& hist);
