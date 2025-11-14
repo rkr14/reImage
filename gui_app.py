@@ -51,7 +51,7 @@ class SegmentationWorker(QThread):
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=60
+                timeout=300
             )
             
             if result.returncode == 0:

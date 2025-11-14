@@ -55,8 +55,8 @@ int main(int argc, char** argv) {
             int y1 = std::atoi(argv[8]);
             outMaskPath = argv[9];
             seeds.reset(new SeedMask(W, H, x0, y0, x1, y1));
-        } 
-        
+        }
+
         else if (mode == "mask") {
 
             if (argc < 7) {
@@ -67,8 +67,8 @@ int main(int argc, char** argv) {
             outMaskPath = argv[6];
             seeds.reset(new SeedMask(seedBin, W, H));
 
-        } 
-        
+        }
+
         else if (mode == "scribbles") {
             //Not using this mode in the final version as well
 
@@ -99,15 +99,15 @@ int main(int argc, char** argv) {
             };
             fg_confirm = find_true("\"fg_confirm\"");
             bg_confirm = find_true("\"bg_confirm\"");
-        } 
-        
+        }
+
         else {
             std::cerr << "Unknown seed mode: " << mode << "\n";
             return 1;
         }
 
         Image img(imageBin, W, H, 3);
-        DataModel dm(8, 1.0, 1e-9);
+        DataModel dm(16, 1.0, 1e-9);
 
         // Configure whether confirmed scribbles are hard constraints
         dm.setHardSeeds(fg_confirm, bg_confirm);                //here we are always passing true to these constraints
