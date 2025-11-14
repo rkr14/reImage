@@ -545,36 +545,37 @@ class MainWindow(QMainWindow):
         self.canvas.update_display()
 
     def save_result(self):
-        """Export the final result to disk - save your masterpiece"""
+        """Save final segmentation with transparent background."""
         file_path, _ = QFileDialog.getSaveFileName(
             self,
             "Save Result",
             "output.png",
-            "PNG Image (*.png);;JPEG Image (*.jpg);;All Files (*)",
+            "PNG Image (*.png);;All Files (*)",
         )
-
-        if file_path:
-            try:
-                output_mask = os.path.join(self.temp_dir, "output_mask.bin")
-                img = Image.open(self.image_path)
-                W, H = img.size
-
-                mask = np.fromfile(output_mask, dtype=np.uint8).reshape((H, W))
-
-                # Create the overlay (50/50 blend )
-                img_arr = np.array(img)
-                overlay = img_arr.copy()
-                overlay[mask == 1] = (
-                    overlay[mask == 1] * 0.5 + np.array([0, 255, 0]) * 0.5
-                )
-
-                result = Image.fromarray(overlay.astype(np.uint8))
-                result.save(file_path)
-
-                self.statusBar().showMessage(f"Saved: {file_path}")
-                QMessageBox.information(self, "Saved", f"Result saved to:\n{file_path}")
-            except Exception as e:
-                QMessageBox.critical(self, "Error", f"Failed to save: {str(e)}")
+    
+        if not file_path:
+            return
+    
+        try:
+            output_mask = os.path.join(self.temp_dir, "output_mask.bin")
+            img = Image.open(self.image_path).convert("RGB")
+            W, H = img.size
+    
+            mask = np.fromfile(output_mask, dtype=np.uint8).reshape((H, W))
+    
+            img_arr = np.array(img)
+            rgba = np.zeros((H, W, 4), dtype=np.uint8)
+            rgba[:, :, :3] = img_arr
+            rgba[:, :, 3] = (mask == 1).astype(np.uint8) * 255
+    
+            result = Image.fromarray(rgba, mode="RGBA")
+            result.save(file_path)
+    
+            self.statusBar().showMessage(f"Saved: {file_path}")
+            QMessageBox.information(self, "Saved", f"Result saved to:\n{file_path}")
+    
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to save: {str(e)}")
 
 
 def main():
