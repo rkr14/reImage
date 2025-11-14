@@ -78,3 +78,10 @@ python/__pycache__/
 # --- Build scripts and local runs ---
 run.bat
 run.sh
+
+
+#test images
+op.png
+output.png
+ouput.jpg
+input.jpg
