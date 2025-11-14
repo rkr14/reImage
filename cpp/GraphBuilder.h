@@ -6,7 +6,11 @@
 
 class GraphBuilder {
 public:
-    GraphBuilder(const Image& img, const DataModel& dm, double lambda = 50.0);
+    GraphBuilder(
+        const Image& img, 
+        const DataModel& dm, 
+        double lambda = 50.0
+    );
 
     // builds Dinic graph and returns owned pointer to it
     // nodes: 0 .. (W*H-1), source = W*H, sink = W*H+1

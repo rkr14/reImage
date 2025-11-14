@@ -112,7 +112,7 @@ void DataModel::computeDataCosts(const Image& img, const SeedMask& seeds) {
     computeDataCosts_SIMD(img, seeds);
 #else
     // Scalar fallback
-    const double K = 1e15;
+    const double K = 1e9;
     for (int y = 0; y < H; ++y) {
         for (int x = 0; x < W; ++x) {
             int idx = y * W + x;
@@ -138,7 +138,7 @@ void DataModel::computeDataCosts(const Image& img, const SeedMask& seeds) {
 }
 
 void DataModel::computeDataCosts_SIMD(const Image& img, const SeedMask& seeds) {
-    const double K = 1e15;
+    const double K = 1e9;
     const int W_aligned = (W / 4) * 4;  // Process in groups of 4
     
     for (int y = 0; y < H; ++y) {

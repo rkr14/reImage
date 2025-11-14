@@ -5,7 +5,10 @@
 
 class DataModel {
 public:
-    DataModel(int binsPerChannel = 8, double alpha = 1.0, double epsilon = 1e-9);
+    DataModel(
+        int binsPerChannel = 8
+        , double alpha = 1.0
+        , double epsilon = 1e-9);
 
     /*
     Build histograms from the image given
