@@ -4,11 +4,11 @@ Professional image segmentation tool using graph-cut algorithm with AVX2-optimiz
 
 ## Features
 
-- 🎨 **Interactive Scribble Interface** - Draw foreground/background seeds with adjustable brush
-- ⚡ **AVX2 Optimized** - 3-4x faster with SIMD vectorization
-- 🖼️ **Auto-Display Results** - See segmentation overlay instantly
-- 💾 **Export Results** - Save segmented images with transparency
-- 📦 **Standalone Executable** - No installation required (Windows .exe provided)
+-  **Interactive Scribble Interface** - Draw foreground/background seeds with adjustable brush
+-  **AVX2 Optimized** - 3-4x faster with SIMD vectorization
+-  **Auto-Display Results** - See segmentation overlay instantly
+-  **Export Results** - Save segmented images with transparency
+-  **Standalone Executable** - No installation required (Windows .exe provided)
 
 ## Quick Start (Windows)
 
@@ -95,7 +95,7 @@ Output: `dist/reImage.exe`
 - Cache-friendly loop ordering (horizontal/vertical separation)
 - Const/constexpr where applicable
 
-## Project Structure
+ # Project Structure
 
 ```
 reImage/
