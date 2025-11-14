@@ -29,7 +29,7 @@ Uses **graph-cut segmentation** with:
 **C++ Backend:**
 - CMake 3.10+
 - GCC/Clang (with AVX2 support) or MSVC
-- C++17 compiler
+- C++23 compiler
 
 **Python GUI:**
 - Python 3.12+
