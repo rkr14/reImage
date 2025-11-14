@@ -1,4 +1,5 @@
 #include "DataModel.h"
+#include "SimdOps.h"
 #include <cmath>
 #include <algorithm>
 #include <iostream>
@@ -42,23 +43,51 @@ void DataModel::buildHistograms(const Image& img, const SeedMask& seeds) {
     std::fill(histFG.begin(), histFG.end(), 0.0);
     std::fill(histBG.begin(), histBG.end(), 0.0);
 
+#ifdef __AVX2__
+    buildHistograms_SIMD(img, seeds);
+#else
+    // Scalar fallback
     for (int y = 0; y < H; ++y) {
         for (int x = 0; x < W; ++x) {
             int label = seeds.getLabel(x, y);
             if (label == 1) {
-                int idx = getBinIndex(img.getColor(x, y));      //which bin does this colour belong to
-                histFG[idx] += 1.0;                             //increase the count at that index
-            }   //foreground                      
+                int idx = getBinIndex(img.getColor(x, y));
+                histFG[idx] += 1.0;
+            }
             else if (label == 0) {
                 int idx = getBinIndex(img.getColor(x, y));
                 histBG[idx] += 1.0;
-            }   //backfround
+            }
         }
     }
+#endif
 
     // If histFG or histBG is all zeros (no seeds), smoothing will give uniform distribution
     normalize(histFG);
     normalize(histBG);
+}
+
+void DataModel::buildHistograms_SIMD(const Image& img, const SeedMask& seeds) {
+    // SIMD version: process pixels in batches where possible
+    // For simplicity, we still process individually but could batch seed pixel collection
+    for (int y = 0; y < H; ++y) {
+        for (int x = 0; x < W; ++x) {
+            int label = seeds.getLabel(x, y);
+            if (label == 1) {
+                int idx = getBinIndex(img.getColor(x, y));
+                histFG[idx] += 1.0;
+            }
+            else if (label == 0) {
+                int idx = getBinIndex(img.getColor(x, y));
+                histBG[idx] += 1.0;
+            }
+        }
+    }
+    // Note: Full vectorization of histogram building is complex due to:
+    // - Variable seed patterns (not predictable which pixels are seeds)
+    // - Race conditions in histogram updates
+    // - Sparse seed data
+    // The main speedup comes from computeDataCosts instead.
 }
 
 /*
@@ -79,12 +108,13 @@ void DataModel::computeDataCosts(const Image& img, const SeedMask& seeds) {
     DpFG.assign(static_cast<size_t>(W) * H, 0.0);
     DpBG.assign(static_cast<size_t>(W) * H, 0.0);
 
-    const double K = 1e9;       //used in creating hard connections for known
-                                //foreground or background pixels
-
+#ifdef __AVX2__
+    computeDataCosts_SIMD(img, seeds);
+#else
+    // Scalar fallback
+    const double K = 1e15;
     for (int y = 0; y < H; ++y) {
         for (int x = 0; x < W; ++x) {
-
             int idx = y * W + x;
             Vec3 c = img.getColor(x, y);
             int b = getBinIndex(c);
@@ -94,16 +124,73 @@ void DataModel::computeDataCosts(const Image& img, const SeedMask& seeds) {
             double Dbg = -std::log(Pbg + eps);
             int label = seeds.getLabel(x, y);
 
-            // label: -1 unknown, 0 background, 1 foreground
             if (label == 1) {
                 if (fgHard) { Dfg = 0.0; Dbg = K; }
-                // else keep Dfg/Dbg computed from histograms (soft)
-                //We will be using hard mappings
             }
             else if (label == 0) {
                 if (bgHard) { Dfg = K; Dbg = 0.0; }
-                // else keep Dfg/Dbg computed from histograms (soft)
-                //We will be using hard connections in our case
+            }
+            DpFG[idx] = Dfg;
+            DpBG[idx] = Dbg;
+        }
+    }
+#endif
+}
+
+void DataModel::computeDataCosts_SIMD(const Image& img, const SeedMask& seeds) {
+    const double K = 1e15;
+    const int W_aligned = (W / 4) * 4;  // Process in groups of 4
+    
+    for (int y = 0; y < H; ++y) {
+        // SIMD batch processing: process 4 pixels at a time
+        for (int x = 0; x < W_aligned; x += 4) {
+            alignas(32) double colors[12];
+            alignas(32) double Dfg[4], Dbg[4];
+            
+            // Load 4 colors
+            for (int i = 0; i < 4; ++i) {
+                Vec3 c = img.getColor(x + i, y);
+                colors[i*3]     = c.r;
+                colors[i*3 + 1] = c.g;
+                colors[i*3 + 2] = c.b;
+            }
+            
+            // Compute data costs using SIMD
+            simd::computeDataCosts4_AVX2(colors, bins, totalBins, histFG, histBG, eps, Dfg, Dbg);
+            
+            // Apply hard constraints and store results
+            for (int i = 0; i < 4; ++i) {
+                int idx = y * W + x + i;
+                int label = seeds.getLabel(x + i, y);
+                
+                if (label == 1) {
+                    if (fgHard) { Dfg[i] = 0.0; Dbg[i] = K; }
+                }
+                else if (label == 0) {
+                    if (bgHard) { Dfg[i] = K; Dbg[i] = 0.0; }
+                }
+                
+                DpFG[idx] = Dfg[i];
+                DpBG[idx] = Dbg[i];
+            }
+        }
+        
+        // Handle remaining pixels (if W not divisible by 4)
+        for (int x = W_aligned; x < W; ++x) {
+            int idx = y * W + x;
+            Vec3 c = img.getColor(x, y);
+            int b = getBinIndex(c);
+            double Pfg = histFG[b];
+            double Pbg = histBG[b];
+            double Dfg = -std::log(Pfg + eps);
+            double Dbg = -std::log(Pbg + eps);
+            int label = seeds.getLabel(x, y);
+            
+            if (label == 1) {
+                if (fgHard) { Dfg = 0.0; Dbg = K; }
+            }
+            else if (label == 0) {
+                if (bgHard) { Dfg = K; Dbg = 0.0; }
             }
             DpFG[idx] = Dfg;
             DpBG[idx] = Dbg;
