@@ -23,7 +23,9 @@
 /cpp/Debug/
 /cpp/Release/
 /cpp/x64/
-
+*.jpg
+*.jpeg
+*.png
 # --- Python cache & venv ---
 __pycache__/
 *.py[cod]
