@@ -41,4 +41,8 @@ private:
 
     int getBinIndex(const Vec3& c) const;
     void normalize(std::vector<double>& hist);
+    
+    // AVX2-optimized helper functions
+    void buildHistograms_SIMD(const Image& img, const SeedMask& seeds);
+    void computeDataCosts_SIMD(const Image& img, const SeedMask& seeds);
 };

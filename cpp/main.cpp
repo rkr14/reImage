@@ -107,7 +107,7 @@ int main(int argc, char** argv) {
         }
 
         Image img(imageBin, W, H, 3);
-        DataModel dm(8, 1.0, 1e-9);
+        DataModel dm(16, 1.0, 1e-9);
 
         // Configure whether confirmed scribbles are hard constraints
         dm.setHardSeeds(fg_confirm, bg_confirm);                //here we are always passing true to these constraints
