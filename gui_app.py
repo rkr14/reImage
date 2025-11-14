@@ -36,7 +36,7 @@ class SegmentationWorker(QThread):
     def run(self):
         try:
             self.progress.emit("Running segmentation...")
-            # Usage: segment.exe image.bin W H mask seed.bin out_mask.bin
+            #  segment.exe image.bin W H mask seed.bin out_mask.bin
             cmd = [
                 self.exe_path,
                 self.image_path,
@@ -65,7 +65,7 @@ class SegmentationWorker(QThread):
 
 
 class ImageCanvas(QLabel):
-    """Interactive canvas for drawing foreground/background scribbles"""
+    #draw the screen
     
     def __init__(self):
         super().__init__()
@@ -198,7 +198,7 @@ class ImageCanvas(QLabel):
 
 
 class MainWindow(QMainWindow):
-    """Main application window"""
+    """Main screem"""
     
     def __init__(self):
         super().__init__()
@@ -208,9 +208,9 @@ class MainWindow(QMainWindow):
         self.image_path = None
         self.temp_dir = tempfile.mkdtemp()
         
-        # Find segment.exe (bundled with PyInstaller or in development)
+        #runn segment
         if getattr(sys, 'frozen', False):
-            # Running as compiled exe
+        
             base_path = Path(sys._MEIPASS)
             self.cpp_exe = str(base_path / "segment.exe")
         else:
@@ -436,7 +436,7 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(message)
             self.save_btn.setEnabled(True)
             
-            # Automatically display the result
+            
             try:
                 self.display_result()
                 QMessageBox.information(self, "Success", "Segmentation completed!\n")
