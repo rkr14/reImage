@@ -3,6 +3,10 @@
 #include <stdexcept>
 #include <algorithm>
 
+/*
+cast per pixel seed information from the binary file (written by python)
+into the seedmask class
+*/
 SeedMask::SeedMask(const std::string& seed_bin_path, int width, int height)
     : W(width), H(height)
 {
@@ -34,6 +38,7 @@ SeedMask::SeedMask(int width, int height, int x0, int y0, int x1, int y1)
         }
     }
 }
+//Not using this in this project
 
 int SeedMask::getLabel(int x, int y) const {
     if (x < 0 || x >= W || y < 0 || y >= H) return 0;

@@ -6,6 +6,9 @@
 
 namespace simd {
 
+//if the computer has AVX2 hardware support
+//We use this to parrelelize colour difference calculations to speed up 
+//This process by around 3-4 times
 #ifdef __AVX2__
     // Compute squared distance between 4 pairs of RGB colors using AVX2
     // Input: 4 colors in a (r0,g0,b0, r1,g1,b1, r2,g2,b2, r3,g3,b3)

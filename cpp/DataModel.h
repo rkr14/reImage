@@ -7,7 +7,11 @@ class DataModel {
 public:
     DataModel(int binsPerChannel = 8, double alpha = 1.0, double epsilon = 1e-9);
 
-    // Build histograms from seeds
+    /*
+    Build histograms from the image given
+    Histograms will be used to model p(colour|FG) or p(colour|BG)
+    Initial foreground and background information will be taken from the seedmask
+    */
     void buildHistograms(const Image& img, const SeedMask& seeds);
 
     // Compute per-pixel data costs DpFG and DpBG and store internally

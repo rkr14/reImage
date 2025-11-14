@@ -5,11 +5,16 @@
 GraphBuilder::GraphBuilder(const Image& img, const DataModel& dm, double lambda_)
     : image(img), dataModel(dm), W(img.width()), H(img.height()), lambda(lambda_) {}
 
+/*
+beta is the mean color difference in neighbouring edges
+we will use this as an important constant in the weight of the n-links (pixel to pixel links)
+*/
 double GraphBuilder::computeBeta(const Image& img) {
     const int W = img.width(), H = img.height();
     double sum = 0.0;
     long long cnt = 0;
 
+//process 4 at a time by using AVX2
 #ifdef __AVX2__
     // AVX2 
     for (int y = 0; y < H; ++y) {
@@ -49,6 +54,8 @@ double GraphBuilder::computeBeta(const Image& img) {
             ++cnt;
         }
     }
+
+//is AVX2 not present, calculate in scalar mannner
 #else
     // Scalar 
     for (int y = 0; y < H; ++y) {
@@ -77,6 +84,7 @@ std::unique_ptr<Dinic> GraphBuilder::buildGraph() {
     int nodes = W * H;
     int source = nodes;
     int sink = nodes + 1;
+    //create new dinic object (graph) and return pointer to it
     std::unique_ptr<Dinic> G(new Dinic(nodes + 2));
 
     double beta = computeBeta(image);
@@ -85,8 +93,9 @@ std::unique_ptr<Dinic> GraphBuilder::buildGraph() {
     for (int y = 0; y < H; ++y) {
         for (int x = 0; x < W; ++x) {
             int idx = y * W + x;
-            double capS = dataModel.getDpBG(x, y); // source -> node (bg cost)
-            double capT = dataModel.getDpFG(x, y); // node -> sink (fg cost)
+            double capS = dataModel.getDpBG(x, y); // source -> node (use bg cost that we calculated in the datamodel file)
+            double capT = dataModel.getDpFG(x, y); // node -> sink (use fg cost)
+
             // add source->node with capS
             G->add_edge(source, idx, capS);
             // add node->sink with capT
@@ -94,7 +103,7 @@ std::unique_ptr<Dinic> GraphBuilder::buildGraph() {
         }
     }
 
-    // add n-links (4-neighborhood) - optimized for cache locality
+    // add n-links (4-neighborhood : up down, left. right)
     const double neg_beta = -beta;
     
     

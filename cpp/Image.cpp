@@ -16,6 +16,8 @@ Image::Image(const std::string& path, int width, int height, int channels)
     if (!in) throw std::runtime_error("Image: failed to read expected bytes from " + path);
 }
 
+
+//Alternative constructur not being used in our project
 Image::Image(const std::vector<uint8_t>& raw, int width, int height, int channels)
     : W(width), H(height), C(channels), data(raw)
 {

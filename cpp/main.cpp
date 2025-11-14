@@ -42,6 +42,9 @@ int main(int argc, char** argv) {
 
     try {
         if (mode == "rect") {
+            //implemented for initial testing
+            //but not actually using rectnagle mode finally
+
             if (argc < 10) {
                 std::cerr << "Rect requires x0 y0 x1 y1 out_mask.bin\n";
                 return 1;
@@ -52,7 +55,10 @@ int main(int argc, char** argv) {
             int y1 = std::atoi(argv[8]);
             outMaskPath = argv[9];
             seeds.reset(new SeedMask(W, H, x0, y0, x1, y1));
-        } else if (mode == "mask") {
+        } 
+        
+        else if (mode == "mask") {
+
             if (argc < 7) {
                 std::cerr << "Mask mode requires seed.bin and out_mask.bin\n";
                 return 1;
@@ -60,7 +66,12 @@ int main(int argc, char** argv) {
             std::string seedBin = argv[5];
             outMaskPath = argv[6];
             seeds.reset(new SeedMask(seedBin, W, H));
-        } else if (mode == "scribbles") {
+
+        } 
+        
+        else if (mode == "scribbles") {
+            //Not using this mode in the final version as well
+
             // Expected args: image.bin W H scribbles seed.bin scribbles.json out_mask.bin
             if (argc < 8) {
                 std::cerr << "Scribbles mode requires seed.bin scribbles.json out_mask.bin\n";
@@ -88,15 +99,18 @@ int main(int argc, char** argv) {
             };
             fg_confirm = find_true("\"fg_confirm\"");
             bg_confirm = find_true("\"bg_confirm\"");
-        } else {
+        } 
+        
+        else {
             std::cerr << "Unknown seed mode: " << mode << "\n";
             return 1;
         }
 
         Image img(imageBin, W, H, 3);
         DataModel dm(8, 1.0, 1e-9);
+
         // Configure whether confirmed scribbles are hard constraints
-        dm.setHardSeeds(fg_confirm, bg_confirm);
+        dm.setHardSeeds(fg_confirm, bg_confirm);                //here we are always passing true to these constraints
 
         std::cout << "Building histograms..." << std::endl;
         dm.buildHistograms(img, *seeds);
